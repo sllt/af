@@ -1,4 +1,4 @@
-package mapx
+package mathx
 
 import (
 	"fmt"

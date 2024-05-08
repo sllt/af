@@ -1,4 +1,3 @@
-// Package concurrency contain some functions to support concurrent programming. eg, goroutine, channel.
 package concurrency
 
 import (

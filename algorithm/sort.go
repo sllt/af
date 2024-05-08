@@ -5,16 +5,21 @@ import "github.com/sllt/af/constraints"
 // BubbleSort applys the bubble sort algorithm to sort the collection, will change the original collection data.
 func BubbleSort[T any](slice []T, comparator constraints.Comparator) {
 	for i := 0; i < len(slice); i++ {
+		breakTag := false
 		for j := 0; j < len(slice)-1-i; j++ {
 			isCurrGreatThanNext := comparator.Compare(slice[j], slice[j+1]) == 1
 			if isCurrGreatThanNext {
 				swap(slice, j, j+1)
+				breakTag = true
 			}
+		}
+		if !breakTag {
+			break
 		}
 	}
 }
 
-// InsertionSort applys the insertion sort algorithm to sort the collection, will change the original collection data.
+// InsertionSort apply the insertion sort algorithm to sort the collection, will change the original collection data.
 func InsertionSort[T any](slice []T, comparator constraints.Comparator) {
 	for i := 0; i < len(slice); i++ {
 		for j := i; j > 0; j-- {
@@ -28,7 +33,7 @@ func InsertionSort[T any](slice []T, comparator constraints.Comparator) {
 	}
 }
 
-// SelectionSort applys the selection sort algorithm to sort the collection, will change the original collection data.
+// SelectionSort apply the selection sort algorithm to sort the collection, will change the original collection data.
 func SelectionSort[T any](slice []T, comparator constraints.Comparator) {
 	for i := 0; i < len(slice); i++ {
 		min := i
@@ -163,7 +168,7 @@ func merge[T any](slice []T, lowIndex, midIndex, highIndex int, comparator const
 	}
 }
 
-// CountSort applys the count sort algorithm to sort the collection, don't change the original collection data.
+// CountSort apply the count sort algorithm to sort the collection, don't change the original collection data.
 func CountSort[T any](slice []T, comparator constraints.Comparator) []T {
 	size := len(slice)
 	out := make([]T, size)

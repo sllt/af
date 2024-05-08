@@ -1,3 +1,4 @@
+// Package function implements some functions for control the function execution and some is for functional programming.
 package function
 
 import (
@@ -121,6 +122,27 @@ func Pipeline[T any](funcs ...func(T) T) func(T) T {
 			result = fn(result)
 		}
 		return
+	}
+}
+
+// AcceptIf returns another function of the same signature as the apply function but also includes a bool value to indicate success or failure.
+// A predicate function that takes an argument of type T and returns a bool.
+// An apply function that also takes an argument of type T and returns a modified value of the same type.
+func AcceptIf[T any](predicate func(T) bool, apply func(T) T) func(T) (T, bool) {
+	if predicate == nil {
+		panic("programming error: predicate must be not nil")
+	}
+
+	if apply == nil {
+		panic("programming error: apply must be not nil")
+	}
+
+	return func(t T) (T, bool) {
+		if !predicate(t) {
+			var defaultValue T
+			return defaultValue, false
+		}
+		return apply(t), true
 	}
 }
 

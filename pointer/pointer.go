@@ -1,6 +1,9 @@
+// Package pointer contains some util functions to operate go pointer.
 package pointer
 
-import "reflect"
+import (
+	"reflect"
+)
 
 // Of returns a pointer to the value `v`.
 func Of[T any](v T) *T {
@@ -38,5 +41,10 @@ func ExtractPointer(value any) any {
 	if t.Kind() != reflect.Pointer {
 		return value
 	}
-	return ExtractPointer(v.Elem().Interface())
+
+	if v.Elem().IsValid() {
+		return ExtractPointer(v.Elem().Interface())
+	}
+
+	return nil
 }

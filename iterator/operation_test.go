@@ -1,3 +1,10 @@
+// Package iterator provides a way to iterate over values stored in containers.
+// note:
+// 1. Full feature iterator is complicated, this package is just a experiment to explore how iterators could work in Go.
+// 2. The functionality of this package is very simple and limited, may not meet the actual dev needs.
+// 3. It is currently under development, unstable, and will not be completed for some time in the future.
+// So, based on above factors, you may not use it in production. but, anyone is welcome to improve it.
+// Hope that Go can support iterator in future. see https://github.com/golang/go/discussions/54245 and https://github.com/golang/go/discussions/56413
 package iterator
 
 import (
@@ -11,7 +18,7 @@ func TestMapIterator(t *testing.T) {
 
 	assert := internal.NewAssert(t, "TestMapIterator")
 
-	iter := FromSlice([]int{1, 2, 3, 4})
+	var iter Iterator[int] = FromSlice([]int{1, 2, 3, 4})
 
 	iter = Map(iter, func(n int) int { return n / 2 })
 
@@ -24,7 +31,7 @@ func TestFilterIterator(t *testing.T) {
 
 	assert := internal.NewAssert(t, "TestFilterIterator")
 
-	iter := FromSlice([]int{1, 2, 3, 4})
+	var iter Iterator[int] = FromSlice([]int{1, 2, 3, 4})
 
 	iter = Filter(iter, func(n int) bool { return n < 3 })
 
@@ -37,10 +44,10 @@ func TestJoinIterator(t *testing.T) {
 
 	assert := internal.NewAssert(t, "TestJoinIterator")
 
-	iter1 := FromSlice([]int{1, 2})
-	iter2 := FromSlice([]int{3, 4})
+	var iter1 Iterator[int] = FromSlice([]int{1, 2})
+	var iter2 Iterator[int] = FromSlice([]int{3, 4})
 
-	iter := Join(iter1, iter2)
+	var iter Iterator[int] = Join(iter1, iter2)
 
 	item, ok := iter.Next()
 	assert.Equal(1, item)
@@ -54,7 +61,7 @@ func TestReduce(t *testing.T) {
 
 	assert := internal.NewAssert(t, "TestReduce")
 
-	iter := FromSlice([]int{1, 2, 3, 4})
+	var iter Iterator[int] = FromSlice([]int{1, 2, 3, 4})
 	sum := Reduce(iter, 0, func(a, b int) int { return a + b })
 	assert.Equal(10, sum)
 }
@@ -64,7 +71,7 @@ func TestTakeIterator(t *testing.T) {
 
 	assert := internal.NewAssert(t, "TestTakeIterator")
 
-	iter := FromSlice([]int{1, 2, 3, 4, 5})
+	var iter Iterator[int] = FromSlice([]int{1, 2, 3, 4, 5})
 
 	iter = Take(iter, 3)
 

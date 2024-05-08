@@ -108,13 +108,13 @@ func TestGetMacAddrs(t *testing.T) {
 func TestEncodeUrl(t *testing.T) {
 	assert := internal.NewAssert(t, "TestEncodeUrl")
 
-	urlAddr := "http://www.baidu.com?a=1&b=[2]"
+	urlAddr := "http://www.lancet.com?a=1&b=[2]"
 	encodedUrl, err := EncodeUrl(urlAddr)
 	if err != nil {
 		t.Fail()
 	}
 
-	expected := "http://www.baidu.com?a=1&b=%5B2%5D"
+	expected := "http://www.lancet.com?a=1&b=%5B2%5D"
 	assert.Equal(expected, encodedUrl)
 }
 

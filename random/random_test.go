@@ -154,3 +154,45 @@ func hasDuplicate(arr []int) bool {
 	}
 	return false
 }
+
+func TestRandSymbolChar(t *testing.T) {
+	t.Parallel()
+
+	pattern := `^[\W|_]+$`
+	reg := regexp.MustCompile(pattern)
+
+	symbolChars := RandSymbolChar(10)
+
+	assert := internal.NewAssert(t, "TestRandSymbolChar")
+	assert.Equal(10, len(symbolChars))
+	assert.Equal(true, reg.MatchString(symbolChars))
+}
+
+func TestRandFloat(t *testing.T) {
+	t.Parallel()
+
+	assert := internal.NewAssert(t, "TestRandFloat")
+
+	r1 := RandFloat(1.1, 10.1, 2)
+	assert.GreaterOrEqual(r1, 1.1)
+	assert.Less(r1, 10.1)
+
+	r2 := RandFloat(1.1, 1.1, 2)
+	assert.Equal(1.1, r2)
+
+	r3 := RandFloat(10.1, 1.1, 2)
+	assert.GreaterOrEqual(r1, 1.1)
+	assert.Less(r3, 10.1)
+}
+
+func TestRandFloats(t *testing.T) {
+	t.Parallel()
+	assert := internal.NewAssert(t, "TestRandFloats")
+
+	numbers := RandFloats(5, 1.0, 5.0, 2)
+	for _, n := range numbers {
+		assert.Equal(true, (n >= 1.0 && n < 5.0))
+	}
+
+	assert.Equal(len(numbers), 5)
+}

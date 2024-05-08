@@ -1,4 +1,5 @@
-package mapx
+// Package mathx includes some functions to manipulate map.
+package mathx
 
 import (
 	"fmt"

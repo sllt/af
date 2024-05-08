@@ -1,3 +1,6 @@
+// Package cryptor implements some util functions to encrypt and decrypt.
+// Note:
+// 1. for aes crypt function, the `key` param length should be 16, 24 or 32. if not, will panic.
 package cryptor
 
 import (
@@ -7,6 +10,7 @@ import (
 	"crypto/des"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"io"
@@ -66,6 +70,11 @@ func AesEcbDecrypt(encrypted, key []byte) []byte {
 // AesCbcEncrypt encrypt data with key use AES CBC algorithm
 // len(key) should be 16, 24 or 32.
 func AesCbcEncrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 16 && size != 24 && size != 32 {
+		panic("key length shoud be 16 or 24 or 32")
+	}
+
 	block, _ := aes.NewCipher(key)
 	data = pkcs7Padding(data, block.BlockSize())
 
@@ -84,6 +93,11 @@ func AesCbcEncrypt(data, key []byte) []byte {
 // AesCbcDecrypt decrypt data with key use AES CBC algorithm
 // len(key) should be 16, 24 or 32.
 func AesCbcDecrypt(encrypted, key []byte) []byte {
+	size := len(key)
+	if size != 16 && size != 24 && size != 32 {
+		panic("key length shoud be 16 or 24 or 32")
+	}
+
 	block, _ := aes.NewCipher(key)
 
 	iv := encrypted[:aes.BlockSize]
@@ -99,6 +113,11 @@ func AesCbcDecrypt(encrypted, key []byte) []byte {
 // AesCtrCrypt encrypt data with key use AES CTR algorithm
 // len(key) should be 16, 24 or 32.
 func AesCtrCrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 16 && size != 24 && size != 32 {
+		panic("key length shoud be 16 or 24 or 32")
+	}
+
 	block, _ := aes.NewCipher(key)
 
 	iv := bytes.Repeat([]byte("1"), block.BlockSize())
@@ -113,6 +132,11 @@ func AesCtrCrypt(data, key []byte) []byte {
 // AesCfbEncrypt encrypt data with key use AES CFB algorithm
 // len(key) should be 16, 24 or 32.
 func AesCfbEncrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 16 && size != 24 && size != 32 {
+		panic("key length shoud be 16 or 24 or 32")
+	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -134,6 +158,11 @@ func AesCfbEncrypt(data, key []byte) []byte {
 // AesCfbDecrypt decrypt data with key use AES CFB algorithm
 // len(encrypted) should be great than 16, len(key) should be 16, 24 or 32.
 func AesCfbDecrypt(encrypted, key []byte) []byte {
+	size := len(key)
+	if size != 16 && size != 24 && size != 32 {
+		panic("key length shoud be 16 or 24 or 32")
+	}
+
 	if len(encrypted) < aes.BlockSize {
 		panic("encrypted data is too short")
 	}
@@ -152,6 +181,11 @@ func AesCfbDecrypt(encrypted, key []byte) []byte {
 // AesOfbEncrypt encrypt data with key use AES OFB algorithm
 // len(key) should be 16, 24 or 32.
 func AesOfbEncrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 16 && size != 24 && size != 32 {
+		panic("key length shoud be 16 or 24 or 32")
+	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -173,6 +207,11 @@ func AesOfbEncrypt(data, key []byte) []byte {
 // AesOfbDecrypt decrypt data with key use AES OFB algorithm
 // len(key) should be 16, 24 or 32.
 func AesOfbDecrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 16 && size != 24 && size != 32 {
+		panic("key length shoud be 16 or 24 or 32")
+	}
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -236,6 +275,11 @@ func DesEcbDecrypt(encrypted, key []byte) []byte {
 // DesCbcEncrypt encrypt data with key use DES CBC algorithm
 // len(key) should be 8.
 func DesCbcEncrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 8 {
+		panic("key length shoud be 8")
+	}
+
 	block, _ := des.NewCipher(key)
 	data = pkcs7Padding(data, block.BlockSize())
 
@@ -255,6 +299,11 @@ func DesCbcEncrypt(data, key []byte) []byte {
 // DesCbcDecrypt decrypt data with key use DES CBC algorithm
 // len(key) should be 8.
 func DesCbcDecrypt(encrypted, key []byte) []byte {
+	size := len(key)
+	if size != 8 {
+		panic("key length shoud be 8")
+	}
+
 	block, _ := des.NewCipher(key)
 
 	iv := encrypted[:des.BlockSize]
@@ -270,6 +319,11 @@ func DesCbcDecrypt(encrypted, key []byte) []byte {
 // DesCtrCrypt encrypt data with key use DES CTR algorithm
 // len(key) should be 8.
 func DesCtrCrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 8 {
+		panic("key length shoud be 8")
+	}
+
 	block, _ := des.NewCipher(key)
 
 	iv := bytes.Repeat([]byte("1"), block.BlockSize())
@@ -284,6 +338,11 @@ func DesCtrCrypt(data, key []byte) []byte {
 // DesCfbEncrypt encrypt data with key use DES CFB algorithm
 // len(key) should be 8.
 func DesCfbEncrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 8 {
+		panic("key length shoud be 8")
+	}
+
 	block, err := des.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -304,6 +363,11 @@ func DesCfbEncrypt(data, key []byte) []byte {
 // DesCfbDecrypt decrypt data with key use DES CFB algorithm
 // len(encrypted) should be great than 16, len(key) should be 8.
 func DesCfbDecrypt(encrypted, key []byte) []byte {
+	size := len(key)
+	if size != 8 {
+		panic("key length shoud be 8")
+	}
+
 	block, _ := des.NewCipher(key)
 	if len(encrypted) < des.BlockSize {
 		panic("encrypted data is too short")
@@ -318,8 +382,13 @@ func DesCfbDecrypt(encrypted, key []byte) []byte {
 }
 
 // DesOfbEncrypt encrypt data with key use DES OFB algorithm
-// len(key) should be 16, 24 or 32.
+// len(key) should be 8.
 func DesOfbEncrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 8 {
+		panic("key length shoud be 8")
+	}
+
 	block, err := des.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -340,6 +409,11 @@ func DesOfbEncrypt(data, key []byte) []byte {
 // DesOfbDecrypt decrypt data with key use DES OFB algorithm
 // len(key) should be 8.
 func DesOfbDecrypt(data, key []byte) []byte {
+	size := len(key)
+	if size != 8 {
+		panic("key length shoud be 8")
+	}
+
 	block, err := des.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -477,4 +551,30 @@ func RsaDecrypt(data []byte, privateKeyFileName string) []byte {
 		panic(err)
 	}
 	return plainText
+}
+
+// GenerateRsaKeyPair create rsa private and public key.
+func GenerateRsaKeyPair(keySize int) (*rsa.PrivateKey, *rsa.PublicKey) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, keySize)
+	return privateKey, &privateKey.PublicKey
+}
+
+// RsaEncryptOAEP encrypts the given data with RSA-OAEP.
+func RsaEncryptOAEP(data []byte, label []byte, key rsa.PublicKey) ([]byte, error) {
+	encryptedBytes, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &key, data, label)
+	if err != nil {
+		return nil, err
+	}
+
+	return encryptedBytes, nil
+}
+
+// RsaDecryptOAEP decrypts the data with RSA-OAEP.
+func RsaDecryptOAEP(ciphertext []byte, label []byte, key rsa.PrivateKey) ([]byte, error) {
+	decryptedBytes, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, &key, ciphertext, label)
+	if err != nil {
+		return nil, err
+	}
+
+	return decryptedBytes, nil
 }

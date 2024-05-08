@@ -1,3 +1,4 @@
+// Package slice implements some functions to manipulate slice.
 package slice
 
 import (
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sllt/af/random"
 	"golang.org/x/exp/constraints"
 )
 
@@ -42,12 +44,23 @@ func ContainBy[T any](slice []T, predicate func(item T) bool) bool {
 
 // ContainSubSlice check if the slice contain a given subslice or not.
 func ContainSubSlice[T comparable](slice, subSlice []T) bool {
-	for _, v := range subSlice {
-		if !Contain(slice, v) {
+	if len(subSlice) == 0 {
+		return true
+	}
+	if len(slice) == 0 {
+		return false
+	}
+
+	elementMap := make(map[T]struct{}, len(slice))
+	for _, item := range slice {
+		elementMap[item] = struct{}{}
+	}
+
+	for _, item := range subSlice {
+		if _, ok := elementMap[item]; !ok {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -72,33 +85,39 @@ func Chunk[T any](slice []T, size int) [][]T {
 	return result
 }
 
-// Compact creates an slice with all falsey values removed. The values false, nil, 0, and "" are falsey.
+// Compact creates a slice with all falsey values removed. The values false, nil, 0, and "" are falsey.
 func Compact[T comparable](slice []T) []T {
 	var zero T
 
-	result := []T{}
+	result := make([]T, 0, len(slice))
 
 	for _, v := range slice {
 		if v != zero {
 			result = append(result, v)
 		}
 	}
-
-	return result
+	return result[:len(result):len(result)]
 }
 
 // Concat creates a new slice concatenating slice with any additional slices.
 func Concat[T any](slice []T, slices ...[]T) []T {
-	result := append([]T{}, slice...)
+	totalLen := len(slice)
 
 	for _, v := range slices {
-		result = append(result, v...)
+		totalLen += len(v)
+	}
+
+	result := make([]T, 0, totalLen)
+
+	result = append(result, slice...)
+	for _, s := range slices {
+		result = append(result, s...)
 	}
 
 	return result
 }
 
-// Difference creates an slice of whose element in slice but not in comparedSlice.
+// Difference creates a slice of whose element in slice but not in comparedSlice.
 func Difference[T comparable](slice, comparedSlice []T) []T {
 	result := []T{}
 
@@ -462,20 +481,13 @@ func FlatMap[T any, U any](slice []T, iteratee func(index int, item T) []U) []U 
 
 // Reduce creates an slice of values by running each element of slice thru iteratee function.
 func Reduce[T any](slice []T, iteratee func(index int, item1, item2 T) T, initial T) T {
-	if len(slice) == 0 {
-		return initial
+	accumulator := initial
+
+	for i, v := range slice {
+		accumulator = iteratee(i, v, accumulator)
 	}
 
-	result := iteratee(0, initial, slice[0])
-
-	tmp := make([]T, 2)
-	for i := 1; i < len(slice); i++ {
-		tmp[0] = result
-		tmp[1] = slice[i]
-		result = iteratee(i, tmp[0], tmp[1])
-	}
-
-	return result
+	return accumulator
 }
 
 // ReduceBy produces a value from slice by accumulating the result of each element as passed through the reducer function.
@@ -581,34 +593,32 @@ func IntSlice(slice any) []int {
 	return result
 }
 
-// DeleteAt delete the element of slice from start index to end index - 1.
-func DeleteAt[T any](slice []T, start int, end ...int) []T {
-	size := len(slice)
-
-	if start < 0 || start >= size {
-		return slice
+// DeleteAt delete the element of slice at index.
+func DeleteAt[T any](slice []T, index int) []T {
+	if index >= len(slice) {
+		index = len(slice) - 1
 	}
 
-	if len(end) > 0 {
-		end := end[0]
-		if end <= start {
-			return slice
-		}
-		if end > size {
-			end = size
-		}
+	result := make([]T, len(slice)-1)
+	copy(result, slice[:index])
+	copy(result[index:], slice[index+1:])
 
-		slice = append(slice[:start], slice[end:]...)
-		return slice
+	return result
+}
+
+// DeleteRange delete the element of slice from start index to end index（exclude).
+func DeleteRange[T any](slice []T, start, end int) []T {
+	result := make([]T, 0, len(slice)-(end-start))
+
+	for i := 0; i < start; i++ {
+		result = append(result, slice[i])
 	}
 
-	if start == size-1 {
-		slice = slice[:start]
-	} else {
-		slice = append(slice[:start], slice[start+1:]...)
+	for i := end; i < len(slice); i++ {
+		result = append(result, slice[i])
 	}
 
-	return slice
+	return result
 }
 
 // Drop drop n elements from the start of a slice.
@@ -778,7 +788,11 @@ func UnionBy[T any, V comparable](predicate func(item T) V, slices ...[]T) []T {
 
 // Merge all given slices into one slice.
 func Merge[T any](slices ...[]T) []T {
-	result := make([]T, 0)
+	totalLen := 0
+	for _, v := range slices {
+		totalLen += len(v)
+	}
+	result := make([]T, 0, totalLen)
 
 	for _, v := range slices {
 		result = append(result, v...)
@@ -1105,6 +1119,21 @@ func AppendIfAbsent[T comparable](slice []T, item T) []T {
 	return slice
 }
 
+// SetToDefaultIf sets elements to their default value if they match the given predicate.
+// It retains the positions of the elements in the slice.
+// It returns slice of T and the count of modified slice items
+func SetToDefaultIf[T any](slice []T, predicate func(T) bool) ([]T, int) {
+	var count int
+	for i := 0; i < len(slice); i++ {
+		if predicate(slice[i]) {
+			var zeroValue T
+			slice[i] = zeroValue
+			count++
+		}
+	}
+	return slice, count
+}
+
 // KeyBy converts a slice to a map based on a callback function.
 func KeyBy[T any, U comparable](slice []T, iteratee func(item T) U) map[U]T {
 	result := make(map[U]T, len(slice))
@@ -1153,4 +1182,67 @@ func Partition[T any](slice []T, predicates ...func(item T) bool) [][]T {
 	}
 
 	return result
+}
+
+// Breaks a list into two parts at the point where the predicate for the first time is true.
+func Break[T any](values []T, predicate func(T) bool) ([]T, []T) {
+	a := make([]T, 0)
+	b := make([]T, 0)
+	if len(values) == 0 {
+		return a, b
+	}
+	matched := false
+	for _, value := range values {
+
+		if !matched && predicate(value) {
+			matched = true
+		}
+
+		if matched {
+			b = append(b, value)
+		} else {
+			a = append(a, value)
+		}
+	}
+	return a, b
+}
+
+// Random get a random item of slice, return idx=-1 when slice is empty
+func Random[T any](slice []T) (val T, idx int) {
+	if len(slice) == 0 {
+		return val, -1
+	}
+
+	idx = random.RandInt(0, len(slice))
+	return slice[idx], idx
+}
+
+// RightPadding adds padding to the right end of a slice.
+func RightPadding[T any](slice []T, paddingValue T, paddingLength int) []T {
+	if paddingLength == 0 {
+		return slice
+	}
+	for i := 0; i < paddingLength; i++ {
+		slice = append(slice, paddingValue)
+	}
+	return slice
+}
+
+// LeftPadding adds padding to the left begin of a slice.
+func LeftPadding[T any](slice []T, paddingValue T, paddingLength int) []T {
+	if paddingLength == 0 {
+		return slice
+	}
+
+	paddedSlice := make([]T, len(slice)+paddingLength)
+	i := 0
+	for ; i < paddingLength; i++ {
+		paddedSlice[i] = paddingValue
+	}
+	for j := 0; j < len(slice); j++ {
+		paddedSlice[i] = slice[j]
+		i++
+	}
+
+	return paddedSlice
 }

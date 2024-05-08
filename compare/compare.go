@@ -1,5 +1,3 @@
-// Package compare provides a lightweight comparison function on any type.
-// reference: https://github.com/stretchr/testify
 package compare
 
 import (

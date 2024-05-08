@@ -2,11 +2,11 @@ package slice
 
 import (
 	"fmt"
+	"github.com/sllt/af/internal"
 	"math"
+	"reflect"
 	"strconv"
 	"testing"
-
-	"github.com/sllt/af/internal"
 )
 
 func TestContain(t *testing.T) {
@@ -106,6 +106,19 @@ func TestConcat(t *testing.T) {
 
 	assert.Equal([]int{1, 2, 3, 4, 5}, Concat([]int{1, 2, 3}, []int{4, 5}))
 	assert.Equal([]int{1, 2, 3, 4, 5}, Concat([]int{1, 2, 3}, []int{4}, []int{5}))
+}
+
+func BenchmarkConcat(b *testing.B) {
+	slice1 := []int{1, 2, 3}
+	slice2 := []int{4, 5, 6}
+	slice3 := []int{7, 8, 9}
+
+	for i := 0; i < b.N; i++ {
+		result := Concat(slice1, slice2, slice3)
+		if len(result) == 0 {
+			b.Fatal("unexpected empty result")
+		}
+	}
 }
 
 func TestEqual(t *testing.T) {
@@ -572,19 +585,27 @@ func TestDeleteAt(t *testing.T) {
 	t.Parallel()
 
 	assert := internal.NewAssert(t, "TestDeleteAt")
+	arr := []int{1, 2, 3, 4, 5}
 
-	assert.Equal([]string{"a", "b", "c"}, DeleteAt([]string{"a", "b", "c"}, -1))
-	assert.Equal([]string{"a", "b", "c"}, DeleteAt([]string{"a", "b", "c"}, 3))
-	assert.Equal([]string{"b", "c"}, DeleteAt([]string{"a", "b", "c"}, 0))
-	assert.Equal([]string{"a", "c"}, DeleteAt([]string{"a", "b", "c"}, 1))
-	assert.Equal([]string{"a", "b"}, DeleteAt([]string{"a", "b", "c"}, 2))
+	assert.Equal([]int{2, 3, 4, 5}, DeleteAt(arr, 0))
+	assert.Equal([]int{1, 2, 3, 4}, DeleteAt(arr, 4))
 
-	assert.Equal([]string{"b", "c"}, DeleteAt([]string{"a", "b", "c"}, 0, 1))
-	assert.Equal([]string{"c"}, DeleteAt([]string{"a", "b", "c"}, 0, 2))
-	assert.Equal([]string{}, DeleteAt([]string{"a", "b", "c"}, 0, 3))
-	assert.Equal([]string{}, DeleteAt([]string{"a", "b", "c"}, 0, 4))
-	assert.Equal([]string{"a"}, DeleteAt([]string{"a", "b", "c"}, 1, 3))
-	assert.Equal([]string{"a"}, DeleteAt([]string{"a", "b", "c"}, 1, 4))
+	assert.Equal([]int{1, 2, 3, 4}, DeleteAt(arr, 5))
+	assert.Equal([]int{1, 2, 3, 4}, DeleteAt(arr, 6))
+
+	assert.Equal([]int{1, 2, 3, 4, 5}, arr)
+}
+
+func TestDeleteRange(t *testing.T) {
+	t.Parallel()
+
+	assert := internal.NewAssert(t, "TestDeleteRange")
+
+	arr := []int{1, 2, 3, 4, 5}
+
+	assert.Equal([]int{1, 2, 3, 4, 5}, DeleteRange(arr, 0, 0))
+	assert.Equal([]int{2, 3, 4, 5}, DeleteRange(arr, 0, 1))
+	assert.Equal([]int{4, 5}, DeleteRange(arr, 0, 3))
 }
 
 func TestDrop(t *testing.T) {
@@ -1184,4 +1205,218 @@ func TestPartition(t *testing.T) {
 	assert.Equal([][]int{{1, 2, 3, 4, 5}}, Partition([]int{1, 2, 3, 4, 5}))
 	assert.Equal([][]int{{2, 4}, {1, 3, 5}}, Partition([]int{1, 2, 3, 4, 5}, func(n int) bool { return n%2 == 0 }))
 	assert.Equal([][]int{{1, 2}, {3, 4}, {5}}, Partition([]int{1, 2, 3, 4, 5}, func(n int) bool { return n == 1 || n == 2 }, func(n int) bool { return n == 2 || n == 3 || n == 4 }))
+}
+
+func TestRandom(t *testing.T) {
+	t.Parallel()
+	assert := internal.NewAssert(t, "TestRandom")
+
+	var arr []int
+	var val, idx int
+
+	_, idx = Random(arr)
+	assert.Equal(-1, idx)
+
+	arr = []int{}
+	_, idx = Random(arr)
+	assert.Equal(-1, idx)
+
+	arr = []int{1}
+	val, idx = Random(arr)
+	assert.Equal(0, idx)
+	assert.Equal(arr[idx], val)
+
+	arr = []int{1, 2, 3}
+	val, idx = Random(arr)
+	assert.Greater(len(arr), idx)
+	assert.Equal(arr[idx], val)
+}
+
+func TestSetToDefaultIf(t *testing.T) {
+	t.Parallel()
+
+	assert := internal.NewAssert(t, "SetToDefaultIf")
+
+	// Subtest for strings
+	t.Run("strings", func(t *testing.T) {
+		strs := []string{"a", "b", "a", "c", "d", "a"}
+		actualStrs, count := SetToDefaultIf(strs, func(s string) bool { return "a" == s })
+		assert.Equal([]string{"", "b", "", "c", "d", ""}, actualStrs)
+		assert.Equal(3, count)
+	})
+
+	// Subtest for integers
+	t.Run("integers", func(t *testing.T) {
+		ints := []int{1, 2, 3, 2, 4, 2}
+		actualInts, count := SetToDefaultIf(ints, func(i int) bool { return i == 2 })
+		assert.Equal([]int{1, 0, 3, 0, 4, 0}, actualInts)
+		assert.Equal(3, count)
+	})
+
+	// Subtest for floating-point numbers
+	t.Run("floats", func(t *testing.T) {
+		floats := []float64{1.1, 2.2, 3.3, 2.2, 4.4, 2.2}
+		actualFloats, count := SetToDefaultIf(floats, func(f float64) bool { return f == 2.2 })
+		assert.Equal([]float64{1.1, 0, 3.3, 0, 4.4, 0}, actualFloats)
+		assert.Equal(3, count)
+	})
+
+	// Subtest for booleans
+	t.Run("booleans", func(t *testing.T) {
+		bools := []bool{true, false, true, true, false}
+		actualBools, count := SetToDefaultIf(bools, func(b bool) bool { return b })
+		assert.Equal([]bool{false, false, false, false, false}, actualBools)
+		assert.Equal(3, count)
+	})
+
+	// Subtest for a custom type
+	type customType struct {
+		field string
+	}
+	t.Run("customType", func(t *testing.T) {
+		customs := []customType{{"a"}, {"b"}, {"a"}, {"c"}}
+		actualCustoms, count := SetToDefaultIf(customs, func(c customType) bool { return c.field == "a" })
+		expected := []customType{{""}, {"b"}, {""}, {"c"}}
+		assert.Equal(expected, actualCustoms)
+		assert.Equal(2, count)
+	})
+
+	// Subtest for slice of integers
+	t.Run("sliceOfInts", func(t *testing.T) {
+		sliceOfInts := [][]int{{1, 2}, {3, 4}, {5, 6}, {1, 2}}
+		actualSlice, count := SetToDefaultIf(sliceOfInts, func(s []int) bool { return reflect.DeepEqual(s, []int{1, 2}) })
+		expected := [][]int{nil, {3, 4}, {5, 6}, nil}
+		assert.Equal(expected, actualSlice)
+		assert.Equal(2, count)
+	})
+
+	// Subtest for maps (simple use case)
+	t.Run("mapOfStringToInts", func(t *testing.T) {
+		maps := []map[string]int{{"a": 1}, {"b": 2}, {"a": 1}, {"c": 3}}
+		actualMaps, count := SetToDefaultIf(maps, func(m map[string]int) bool { _, ok := m["a"]; return ok })
+		expected := []map[string]int{nil, {"b": 2}, nil, {"c": 3}}
+		assert.Equal(expected, actualMaps)
+		assert.Equal(2, count)
+	})
+
+	// Subtest for pointers to integers
+	t.Run("pointersToInts", func(t *testing.T) {
+		one, two, three := 1, 2, 3
+		pointers := []*int{&one, &two, &one, &three}
+		actualPointers, count := SetToDefaultIf(pointers, func(p *int) bool { return p != nil && *p == 1 })
+		expected := []*int{nil, &two, nil, &three}
+		assert.Equal(expected, actualPointers)
+		assert.Equal(2, count)
+	})
+
+	// Subtest for channels
+	t.Run("channels", func(t *testing.T) {
+		ch1, ch2 := make(chan int), make(chan int)
+		channels := []chan int{ch1, ch2, ch1}
+		actualChannels, count := SetToDefaultIf(channels, func(ch chan int) bool { return ch == ch1 })
+		expected := []chan int{nil, ch2, nil}
+		assert.Equal(expected, actualChannels)
+		assert.Equal(2, count)
+	})
+
+	// Subtest for interfaces
+	t.Run("interfaces", func(t *testing.T) {
+		var i1, i2 interface{} = "hello", 42
+		interfaces := []interface{}{i1, i2, i1}
+		actualInterfaces, count := SetToDefaultIf(interfaces, func(i interface{}) bool { _, ok := i.(string); return ok })
+		expected := []interface{}{nil, 42, nil}
+		assert.Equal(expected, actualInterfaces)
+		assert.Equal(2, count)
+	})
+
+	// Subtest for complex structs
+	t.Run("complexStructs", func(t *testing.T) {
+		type ComplexStruct struct {
+			Name  string
+			Value int
+			Data  []byte
+		}
+		cs1, cs2 := ComplexStruct{Name: "Test", Value: 1, Data: []byte{1, 2, 3}}, ComplexStruct{Name: "Another", Value: 2, Data: []byte{4, 5, 6}}
+		complexStructs := []ComplexStruct{cs1, cs2, cs1}
+		actualComplexStructs, count := SetToDefaultIf(complexStructs, func(cs ComplexStruct) bool { return cs.Name == "Test" })
+		expected := []ComplexStruct{{}, cs2, {}}
+		assert.Equal(expected, actualComplexStructs)
+		assert.Equal(2, count)
+	})
+
+	// Subtest for uints
+	t.Run("uints", func(t *testing.T) {
+		uints := []uint{1, 2, 3, 2, 4, 2}
+		actualUints, count := SetToDefaultIf(uints, func(u uint) bool { return u == 2 })
+		assert.Equal([]uint{1, 0, 3, 0, 4, 0}, actualUints)
+		assert.Equal(3, count)
+	})
+
+	// Subtest for float32
+	t.Run("float32s", func(t *testing.T) {
+		floats := []float32{1.1, 2.2, 3.3, 2.2, 4.4, 2.2}
+		actualFloats, count := SetToDefaultIf(floats, func(f float32) bool { return f == 2.2 })
+		assert.Equal([]float32{1.1, 0, 3.3, 0, 4.4, 0}, actualFloats)
+		assert.Equal(3, count)
+	})
+
+	// Subtest for []byte
+	t.Run("byteSlices", func(t *testing.T) {
+		bytes := [][]byte{{'a', 'b'}, {'c', 'd'}, {'a', 'b'}}
+		actualBytes, count := SetToDefaultIf(bytes, func(b []byte) bool { return string(b) == "ab" })
+		expected := [][]byte{nil, {'c', 'd'}, nil}
+		assert.Equal(expected, actualBytes)
+		assert.Equal(2, count)
+	})
+}
+
+func TestBreak(t *testing.T) {
+	t.Parallel()
+
+	assert := internal.NewAssert(t, "TestBreak")
+
+	// Test with integers
+	nums := []int{1, 2, 3, 4, 5}
+	even := func(n int) bool { return n%2 == 0 }
+
+	resultEven, resultAfterFirstEven := Break(nums, even)
+	assert.Equal([]int{1}, resultEven)
+	assert.Equal([]int{2, 3, 4, 5}, resultAfterFirstEven)
+
+	// Test with strings
+	strings := []string{"apple", "banana", "cherry", "date", "elderberry"}
+	startsWithA := func(s string) bool { return s[0] == 'a' }
+
+	resultStartsWithA, resultAfterFirstStartsWithA := Break(strings, startsWithA)
+	assert.Equal([]string{}, resultStartsWithA)
+	assert.Equal([]string{"apple", "banana", "cherry", "date", "elderberry"}, resultAfterFirstStartsWithA)
+
+	// Test with empty slice
+	emptySlice := []int{}
+	resultEmpty, _ := Break(emptySlice, even)
+	assert.Equal([]int{}, resultEmpty)
+
+	// Test with all elements satisfying the predicate
+	allEven := []int{2, 4, 6, 8, 10}
+	emptyResult, resultAllEven := Break(allEven, even)
+	assert.Equal([]int{2, 4, 6, 8, 10}, resultAllEven)
+	assert.Equal([]int{}, emptyResult)
+
+	// Test with no elements satisfying the predicate
+	allOdd := []int{1, 3, 5, 7, 9}
+	resultAllOdd, emptyResult := Break(allOdd, even)
+	assert.Equal([]int{1, 3, 5, 7, 9}, resultAllOdd)
+	assert.Equal([]int{}, emptyResult)
+}
+
+func TestRightPaddingAndLeftPadding(t *testing.T) {
+	t.Parallel()
+
+	assert := internal.NewAssert(t, "RightPaddingAndLeftPadding")
+
+	// Test with integers
+	nums := []int{1, 2, 3, 4, 5}
+
+	padded := LeftPadding(RightPadding(nums, 0, 3), 0, 3)
+	assert.Equal([]int{0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0}, padded)
 }

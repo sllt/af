@@ -479,6 +479,26 @@ func ExampleIsBlank() {
 	// false
 }
 
+func ExampleIsNotBlank() {
+	result1 := IsNotBlank("")
+	result2 := IsNotBlank("			")
+	result3 := IsNotBlank("\t\v\f\n")
+	result4 := IsNotBlank(" 中文")
+	result5 := IsNotBlank(" 	world	")
+
+	fmt.Println(result1)
+	fmt.Println(result2)
+	fmt.Println(result3)
+	fmt.Println(result4)
+	fmt.Println(result5)
+	// Output:
+	// false
+	// false
+	// false
+	// true
+	// true
+}
+
 func ExampleHasPrefixAny() {
 	result1 := HasPrefixAny("foo bar", []string{"fo", "xyz", "hello"})
 	result2 := HasPrefixAny("foo bar", []string{"oom", "world"})
@@ -632,4 +652,45 @@ func ExampleRemoveWhiteSpace() {
 	// Output:
 	// helloworld
 	// hello world
+}
+
+func ExampleSubInBetween() {
+	str := "abcde"
+
+	result1 := SubInBetween(str, "", "de")
+	result2 := SubInBetween(str, "a", "d")
+
+	fmt.Println(result1)
+	fmt.Println(result2)
+
+	// Output:
+	// abc
+	// bc
+}
+
+func ExampleHammingDistance() {
+
+	result, _ := HammingDistance("abc", "def")
+	fmt.Println(result)
+
+	result, _ = HammingDistance("name", "namf")
+	fmt.Println(result)
+
+	// Output:
+	// 3
+	// 1
+}
+
+func ExampleConcat() {
+	result1 := Concat(12, "Hello", " ", "World", "!")
+	result2 := Concat(11, "Go", " ", "Language")
+	result3 := Concat(0, "An apple a ", "day，", "keeps the", " doctor away")
+	fmt.Println(result1)
+	fmt.Println(result2)
+	fmt.Println(result3)
+
+	// Output:
+	// Hello World!
+	// Go Language
+	// An apple a day，keeps the doctor away
 }

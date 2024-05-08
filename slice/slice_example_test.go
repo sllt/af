@@ -594,18 +594,46 @@ func ExampleIntSlice() {
 }
 
 func ExampleDeleteAt() {
-	result1 := DeleteAt([]string{"a", "b", "c"}, -1)
-	result2 := DeleteAt([]string{"a", "b", "c"}, 0)
-	result3 := DeleteAt([]string{"a", "b", "c"}, 0, 2)
+	chars := []string{"a", "b", "c", "d", "e"}
+
+	result1 := DeleteAt(chars, 0)
+	result2 := DeleteAt(chars, 4)
+	result3 := DeleteAt(chars, 5)
+	result4 := DeleteAt(chars, 6)
 
 	fmt.Println(result1)
 	fmt.Println(result2)
 	fmt.Println(result3)
+	fmt.Println(result4)
 
 	// Output:
-	// [a b c]
-	// [b c]
-	// [c]
+	// [b c d e]
+	// [a b c d]
+	// [a b c d]
+	// [a b c d]
+}
+
+func ExampleDeleteRange() {
+	chars := []string{"a", "b", "c", "d", "e"}
+
+	result1 := DeleteRange(chars, 0, 0)
+	result2 := DeleteRange(chars, 0, 1)
+	result3 := DeleteRange(chars, 0, 3)
+	result4 := DeleteRange(chars, 0, 4)
+	result5 := DeleteRange(chars, 0, 5)
+
+	fmt.Println(result1)
+	fmt.Println(result2)
+	fmt.Println(result3)
+	fmt.Println(result4)
+	fmt.Println(result5)
+
+	// Output:
+	// [a b c d e]
+	// [b c d e]
+	// [d e]
+	// [e]
+	// []
 }
 
 func ExampleDrop() {
@@ -1062,4 +1090,54 @@ func ExamplePartition() {
 	// [[1 2 3 4 5]]
 	// [[2 4] [1 3 5]]
 	// [[1 2] [3 4] [5]]
+}
+
+func ExampleRandom() {
+	nums := []int{1, 2, 3, 4, 5}
+
+	val, idx := Random(nums)
+	if idx >= 0 && idx < len(nums) && Contain(nums, val) {
+		fmt.Println("okk")
+	}
+	// Output:
+	// okk
+}
+
+func ExampleSetToDefaultIf() {
+	strs := []string{"a", "b", "a", "c", "d", "a"}
+	modifiedStrs, count := SetToDefaultIf(strs, func(s string) bool { return "a" == s })
+	fmt.Println(modifiedStrs)
+	fmt.Println(count)
+	// Output:
+	// [ b  c d ]
+	// 3
+}
+
+func ExampleBreak() {
+	nums := []int{1, 2, 3, 4, 5}
+	even := func(n int) bool { return n%2 == 0 }
+
+	resultEven, resultAfterFirstEven := Break(nums, even)
+	fmt.Println(resultEven)
+	fmt.Println(resultAfterFirstEven)
+
+	// Output:
+	// [1]
+	// [2 3 4 5]
+}
+
+func ExampleRightPadding() {
+	nums := []int{1, 2, 3, 4, 5}
+	padded := RightPadding(nums, 0, 3)
+	fmt.Println(padded)
+	// Output:
+	// [1 2 3 4 5 0 0 0]
+}
+
+func ExampleLeftPadding() {
+	nums := []int{1, 2, 3, 4, 5}
+	padded := LeftPadding(nums, 0, 3)
+	fmt.Println(padded)
+	// Output:
+	// [0 0 0 1 2 3 4 5]
 }

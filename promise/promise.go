@@ -1,3 +1,4 @@
+// Package promise contains some functions to support async programming.
 package promise
 
 import (

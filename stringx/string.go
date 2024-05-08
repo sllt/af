@@ -1,7 +1,10 @@
+// Use of this source code is governed by MIT license
+
+// Package stringx implements some functions to manipulate string.
 package stringx
 
 import (
-	"reflect"
+	"errors"
 	"regexp"
 	"strings"
 	"unicode"
@@ -107,37 +110,45 @@ func UpperSnakeCase(s string) string {
 
 // Before returns the substring of the source string up to the first occurrence of the specified string.
 func Before(s, char string) string {
-	if s == "" || char == "" {
+	i := strings.Index(s, char)
+
+	if s == "" || char == "" || i == -1 {
 		return s
 	}
-	i := strings.Index(s, char)
+
 	return s[0:i]
 }
 
 // BeforeLast returns the substring of the source string up to the last occurrence of the specified string.
 func BeforeLast(s, char string) string {
-	if s == "" || char == "" {
+	i := strings.LastIndex(s, char)
+
+	if s == "" || char == "" || i == -1 {
 		return s
 	}
-	i := strings.LastIndex(s, char)
+
 	return s[0:i]
 }
 
 // After returns the substring after the first occurrence of a specified string in the source string.
 func After(s, char string) string {
-	if s == "" || char == "" {
+	i := strings.Index(s, char)
+
+	if s == "" || char == "" || i == -1 {
 		return s
 	}
-	i := strings.Index(s, char)
+
 	return s[i+len(char):]
 }
 
 // AfterLast returns the substring after the last occurrence of a specified string in the source string.
 func AfterLast(s, char string) string {
-	if s == "" || char == "" {
+	i := strings.LastIndex(s, char)
+
+	if s == "" || char == "" || i == -1 {
 		return s
 	}
-	i := strings.LastIndex(s, char)
+
 	return s[i+len(char):]
 }
 
@@ -352,10 +363,7 @@ func RemoveNonPrintable(str string) string {
 
 // StringToBytes converts a string to byte slice without a memory allocation.
 func StringToBytes(str string) (b []byte) {
-	sh := *(*reflect.StringHeader)(unsafe.Pointer(&str))
-	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	bh.Data, bh.Len, bh.Cap = sh.Data, sh.Len, sh.Len
-	return b
+	return *(*[]byte)(unsafe.Pointer(&str))
 }
 
 // BytesToString converts a byte slice to string without a memory allocation.
@@ -376,6 +384,11 @@ func IsBlank(str string) bool {
 		}
 	}
 	return true
+}
+
+// IsNotBlank checks if a string is not whitespace, not empty.
+func IsNotBlank(str string) bool {
+	return !IsBlank(str)
 }
 
 // HasPrefixAny check if a string starts with any of a slice of specified strings.
@@ -531,4 +544,57 @@ func RemoveWhiteSpace(str string, repalceAll bool) string {
 	}
 
 	return strings.TrimSpace(str)
+}
+
+// SubInBetween return substring between the start and end position(excluded) of source string.
+func SubInBetween(str string, start string, end string) string {
+	if _, after, ok := strings.Cut(str, start); ok {
+		if before, _, ok := strings.Cut(after, end); ok {
+			return before
+		}
+	}
+
+	return ""
+}
+
+// HammingDistance calculates the Hamming distance between two strings.
+// The Hamming distance is the number of positions at which the corresponding symbols are different.
+// This func returns an error if the input strings are of unequal lengths.
+func HammingDistance(a, b string) (int, error) {
+	if len(a) != len(b) {
+		return -1, errors.New("a length and b length are unequal")
+	}
+
+	ar := []rune(a)
+	br := []rune(b)
+
+	var distance int
+	for i, codepoint := range ar {
+		if codepoint != br[i] {
+			distance++
+		}
+	}
+
+	return distance, nil
+}
+
+// Concat uses the strings.Builder to concatenate the input strings.
+//   - `length` is the expected length of the concatenated string.
+//   - if you are unsure about the length of the string to be concatenated, please pass 0 or a negative number.
+func Concat(length int, str ...string) string {
+	if len(str) == 0 {
+		return ""
+	}
+
+	sb := strings.Builder{}
+	if length <= 0 {
+		sb.Grow(len(str[0]) * len(str))
+	} else {
+		sb.Grow(length)
+	}
+
+	for _, s := range str {
+		sb.WriteString(s)
+	}
+	return sb.String()
 }

@@ -1,3 +1,7 @@
+// Copyright 2023 dudaodong@gmail.com. All rights reserved.
+// Use of this source code is governed by MIT license
+
+// Package tuple implements tuple data type and some operations on it.
 package tuple
 
 import "github.com/sllt/af/mathx"

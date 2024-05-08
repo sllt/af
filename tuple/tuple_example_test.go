@@ -1,3 +1,4 @@
+// Package tuple implements tuple data type and some operations on it.
 package tuple
 
 import (

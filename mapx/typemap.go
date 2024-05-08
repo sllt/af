@@ -1,4 +1,4 @@
-package mapx
+package mathx
 
 import (
 	"fmt"
@@ -52,7 +52,7 @@ var _ = func() struct{} {
 		}
 
 		var dist Target
-		if err := maputil.MapTo(v,&dist); err != nil {
+		if err := mathx.MapTo(v,&dist); err != nil {
 			log.Println(err)
 			return
 		}
@@ -61,10 +61,16 @@ var _ = func() struct{} {
 
 */
 func MapTo(src any, dst any) error {
-
 	dstRef := reflect.ValueOf(dst)
+
 	if dstRef.Kind() != reflect.Ptr {
 		return fmt.Errorf("dst is not ptr")
+	}
+
+	dstElem := dstRef.Type().Elem()
+	if dstElem.Kind() == reflect.Struct {
+		srcMap := src.(map[string]interface{})
+		return MapToStruct(srcMap, dst)
 	}
 
 	dstRef = reflect.Indirect(dstRef)
@@ -73,6 +79,7 @@ func MapTo(src any, dst any) error {
 	if srcRef.Kind() == reflect.Ptr || srcRef.Kind() == reflect.Interface {
 		srcRef = srcRef.Elem()
 	}
+
 	if f, ok := mapHandlers[srcRef.Kind()]; ok {
 		return f(srcRef, dstRef)
 	}
@@ -120,7 +127,7 @@ func convertSlice(src reflect.Value, dst reflect.Value) error {
 
 func convertMap(src reflect.Value, dst reflect.Value) error {
 	if src.Kind() != reflect.Map || dst.Kind() != reflect.Struct {
-		if src.Kind() == reflect.Interface {
+		if src.Kind() == reflect.Interface && dst.IsValid() {
 			return convertMap(src.Elem(), dst)
 		} else {
 			return fmt.Errorf("src or dst type error,%s,%s", src.Type().String(), dst.Type().String())
@@ -128,7 +135,9 @@ func convertMap(src reflect.Value, dst reflect.Value) error {
 	}
 	dstType := dst.Type()
 	num := dstType.NumField()
+
 	exist := map[string]int{}
+
 	for i := 0; i < num; i++ {
 		k := dstType.Field(i).Tag.Get("json")
 		if k == "" {
@@ -137,7 +146,6 @@ func convertMap(src reflect.Value, dst reflect.Value) error {
 		if strings.Contains(k, ",") {
 			taglist := strings.Split(k, ",")
 			if taglist[0] == "" {
-
 				k = dstType.Field(i).Name
 			} else {
 				k = taglist[0]
@@ -149,9 +157,11 @@ func convertMap(src reflect.Value, dst reflect.Value) error {
 	}
 
 	keys := src.MapKeys()
+
 	for _, key := range keys {
 		if index, ok := exist[key.String()]; ok {
 			v := dst.Field(index)
+
 			if v.Kind() == reflect.Struct {
 				err := convertMap(src.MapIndex(key), v)
 				if err != nil {

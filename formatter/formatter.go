@@ -3,12 +3,11 @@ package formatter
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
+	"strconv"
+	"strings"
 
 	"github.com/sllt/af/convertor"
-	"github.com/sllt/af/stringx"
-	"github.com/sllt/af/validator"
 	"golang.org/x/exp/constraints"
 )
 
@@ -16,31 +15,24 @@ import (
 // if value is invalid number string eg "aa", return empty string
 // Comma("12345", "$") => "$12,345", Comma(12345, "$") => "$12,345"
 func Comma[T constraints.Float | constraints.Integer | string](value T, symbol string) string {
-	if validator.IsInt(value) {
-		v, err := convertor.ToInt(value)
-		if err != nil {
-			return ""
-		}
-		return symbol + commaInt(v)
-	}
+	numString := convertor.ToString(value)
 
-	if validator.IsFloat(value) {
-		v, err := convertor.ToFloat(value)
-		if err != nil {
-			return ""
-		}
-		return symbol + commaFloat(v)
-	}
-
-	if stringx.IsString(value) {
-		v := fmt.Sprintf("%v", value)
-		if validator.IsNumberStr(v) {
-			return symbol + commaStr(v)
-		}
+	_, err := strconv.ParseFloat(numString, 64)
+	if err != nil {
 		return ""
 	}
 
-	return ""
+	index := strings.Index(numString, ".")
+	if index == -1 {
+		index = len(numString)
+	}
+
+	for index > 3 {
+		index = index - 3
+		numString = numString[:index] + "," + numString[index:]
+	}
+
+	return symbol + numString
 }
 
 // Pretty data to JSON string.

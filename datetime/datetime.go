@@ -1,3 +1,28 @@
+// Package datetime implements some functions to format date and time.
+// Note:
+// 1. `format` param in FormatTimeToStr function should be as flow (case no sensitive):
+// "yyyy-mm-dd hh:mm:ss"
+// "yyyy-mm-dd hh:mm"
+// "yyyy-mm-dd hh"
+// "yyyy-mm-dd"
+// "yyyy-mm"
+// "mm-dd"
+// "dd-mm-yy hh:mm:ss"
+// "yyyy/mm/dd hh:mm:ss"
+// "yyyy/mm/dd hh:mm"
+// "yyyy/mm/dd hh"
+// "yyyy/mm/dd"
+// "yyyy/mm"
+// "mm/dd"
+// "dd/mm/yy hh:mm:ss"
+// "yyyymmdd"
+// "mmddyy"
+// "yyyy"
+// "yy"
+// "mm"
+// "hh:mm:ss"
+// "hh:mm"
+// "mm:ss"
 package datetime
 
 import (
@@ -318,4 +343,13 @@ func TimestampNano(timezone ...string) int64 {
 	}
 
 	return t.UnixNano()
+}
+
+// TraceFuncTime: trace the func costed time,just call it at top of the func like `defer TraceFuncTime()()`
+func TraceFuncTime() func() {
+	pre := time.Now()
+	return func() {
+		elapsed := time.Since(pre)
+		fmt.Println("Costs Time:\t", elapsed)
+	}
 }

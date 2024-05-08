@@ -230,6 +230,8 @@ func TestBefore(t *testing.T) {
 
 	assert.Equal("lancet", Before("lancet", ""))
 	assert.Equal("", Before("lancet", "lancet"))
+	assert.Equal("lancet", Before("lancet", "abcdef"))
+
 	assert.Equal("github.com", Before("github.com/test/lancet", "/"))
 	assert.Equal("github.com/", Before("github.com/test/lancet", "test"))
 }
@@ -240,10 +242,10 @@ func TestBeforeLast(t *testing.T) {
 	assert := internal.NewAssert(t, "TestBeforeLast")
 
 	assert.Equal("lancet", BeforeLast("lancet", ""))
+	assert.Equal("lancet", BeforeLast("lancet", "abcdef"))
+
 	assert.Equal("github.com/test", BeforeLast("github.com/test/lancet", "/"))
 	assert.Equal("github.com/test/", BeforeLast("github.com/test/test/lancet", "test"))
-
-	assert.NotEqual("github.com/", BeforeLast("github.com/test/test/lancet", "test"))
 }
 
 func TestAfter(t *testing.T) {
@@ -255,6 +257,8 @@ func TestAfter(t *testing.T) {
 	assert.Equal("", After("lancet", "lancet"))
 	assert.Equal("test/lancet", After("github.com/test/lancet", "/"))
 	assert.Equal("/lancet", After("github.com/test/lancet", "test"))
+
+	assert.Equal("lancet", After("lancet", "abcdef"))
 }
 
 func TestAfterLast(t *testing.T) {
@@ -266,8 +270,7 @@ func TestAfterLast(t *testing.T) {
 	assert.Equal("lancet", AfterLast("github.com/test/lancet", "/"))
 	assert.Equal("/lancet", AfterLast("github.com/test/lancet", "test"))
 	assert.Equal("/lancet", AfterLast("github.com/test/test/lancet", "test"))
-
-	assert.NotEqual("/test/lancet", AfterLast("github.com/test/test/lancet", "test"))
+	assert.Equal("lancet", AfterLast("lancet", "abcdef"))
 }
 
 func TestIsString(t *testing.T) {
@@ -427,6 +430,18 @@ func TestIsBlank(t *testing.T) {
 	assert.Equal(IsBlank(" 中文"), false)
 }
 
+func TestIsNotBlank(t *testing.T) {
+	t.Parallel()
+
+	assert := internal.NewAssert(t, "TestIsBlank")
+	assert.Equal(IsNotBlank(""), false)
+	assert.Equal(IsNotBlank("			"), false)
+	assert.Equal(IsNotBlank("\t\v\f\n"), false)
+
+	assert.Equal(IsNotBlank(" 中文"), true)
+	assert.Equal(IsNotBlank(" 	world	"), true)
+}
+
 func TestHasPrefixAny(t *testing.T) {
 	t.Parallel()
 
@@ -546,6 +561,7 @@ func TestContainsAny(t *testing.T) {
 }
 
 func TestRemoveWhiteSpace(t *testing.T) {
+	t.Parallel()
 	assert := internal.NewAssert(t, "TestRemoveWhiteSpace")
 
 	str := " hello   \r\n	\t   world"
@@ -553,4 +569,54 @@ func TestRemoveWhiteSpace(t *testing.T) {
 	assert.Equal("", RemoveWhiteSpace("", true))
 	assert.Equal("helloworld", RemoveWhiteSpace(str, true))
 	assert.Equal("hello world", RemoveWhiteSpace(str, false))
+}
+
+func TestSubInBetween(t *testing.T) {
+	t.Parallel()
+	assert := internal.NewAssert(t, "TestSubInBetween")
+
+	str := "abcde"
+
+	assert.Equal("", SubInBetween(str, "", ""))
+	assert.Equal("ab", SubInBetween(str, "", "c"))
+	assert.Equal("bc", SubInBetween(str, "a", "d"))
+	assert.Equal("", SubInBetween(str, "a", ""))
+	assert.Equal("", SubInBetween(str, "a", "f"))
+}
+
+func TestHammingDistance(t *testing.T) {
+	t.Parallel()
+	assert := internal.NewAssert(t, "HammingDistance")
+
+	hd := func(a, b string) int {
+		c, _ := HammingDistance(a, b)
+		return c
+	}
+
+	assert.Equal(0, hd(" ", " "))
+	assert.Equal(1, hd(" ", "c"))
+	assert.Equal(1, hd("a", "d"))
+	assert.Equal(1, hd("a", " "))
+	assert.Equal(1, hd("a", "f"))
+
+	assert.Equal(0, hd("", ""))
+	assert.Equal(-1, hd("abc", "ab"))
+	assert.Equal(3, hd("abc", "def"))
+	assert.Equal(-1, hd("kitten", "sitting"))
+	assert.Equal(1, hd("ö", "ü"))
+	assert.Equal(0, hd("日本語", "日本語"))
+	assert.Equal(3, hd("日本語", "語日本"))
+}
+
+func TestConcat(t *testing.T) {
+	t.Parallel()
+	assert := internal.NewAssert(t, "TestConcat")
+
+	assert.Equal("", Concat(0))
+	assert.Equal("a", Concat(1, "a"))
+	assert.Equal("ab", Concat(2, "a", "b"))
+	assert.Equal("abc", Concat(3, "a", "b", "c"))
+	assert.Equal("abc", Concat(3, "a", "", "b", "c", ""))
+	assert.Equal("你好，世界！", Concat(0, "你好", "，", "", "世界！", ""))
+	assert.Equal("Hello World!", Concat(0, "Hello", " Wo", "r", "ld!", ""))
 }

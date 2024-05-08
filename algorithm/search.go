@@ -1,3 +1,4 @@
+// Package algorithm contain some basic algorithm functions. eg. sort, search, list, linklist, stack, queue, tree, graph.
 package algorithm
 
 import "github.com/sllt/af/constraints"

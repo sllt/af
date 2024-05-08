@@ -1,3 +1,4 @@
+// Package internal is for internal use.
 package internal
 
 import (
@@ -30,6 +31,20 @@ func NewAssert(t *testing.T, caseName string) *Assert {
 func (a *Assert) Equal(expected, actual any) {
 	if compare(expected, actual) != compareEqual {
 		makeTestFailed(a.T, a.CaseName, expected, actual)
+	}
+}
+
+// ShouldBeFalse check if expected is false
+func (a *Assert) ShouldBeFalse(actual any) {
+	if compare(false, actual) != compareEqual {
+		makeTestFailed(a.T, a.CaseName, false, actual)
+	}
+}
+
+// ShouldBeTrue check if expected is true
+func (a *Assert) ShouldBeTrue(actual any) {
+	if compare(true, actual) != compareEqual {
+		makeTestFailed(a.T, a.CaseName, true, actual)
 	}
 }
 

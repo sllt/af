@@ -1,7 +1,17 @@
+// Package netutil implements some basic functions to send http request and get ip info.
+// Note:
+// HttpGet, HttpPost, HttpDelete, HttpPut, HttpPatch, function param `url` is required.
+// HttpGet, HttpPost, HttpDelete, HttpPut, HttpPatch, function param `params` is variable, the order is:
+// params[0] is header which type should be http.Header or map[string]string,
+// params[1] is query string param which type should be url.Values or map[string]string, when content-type header is
+// multipart/form-data or application/x-www-form-urlencoded
+// params[2] is post body which type should be []byte.
+// params[3] is http client which type should be http.Client.
 package netx
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -15,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sllt/af/convertor"
 	"github.com/sllt/af/slice"
 )
 
@@ -95,24 +104,26 @@ type HttpClientConfig struct {
 	HandshakeTimeout time.Duration
 	ResponseTimeout  time.Duration
 	Verbose          bool
+	Proxy            *url.URL
 }
 
-// defaultHttpClientConfig defalut client config
+// defaultHttpClientConfig defalut client config.
 var defaultHttpClientConfig = &HttpClientConfig{
 	Compressed:       false,
 	HandshakeTimeout: 20 * time.Second,
 	ResponseTimeout:  40 * time.Second,
 }
 
-// HttpClient is used for sending http request
+// HttpClient is used for sending http request.
 type HttpClient struct {
 	*http.Client
 	TLS     *tls.Config
 	Request *http.Request
 	Config  HttpClientConfig
+	Context context.Context
 }
 
-// NewHttpClient make a HttpClient instance
+// NewHttpClient make a HttpClient instance.
 func NewHttpClient() *HttpClient {
 	client := &HttpClient{
 		Client: &http.Client{
@@ -128,7 +139,7 @@ func NewHttpClient() *HttpClient {
 	return client
 }
 
-// NewHttpClientWithConfig make a HttpClient instance with pass config
+// NewHttpClientWithConfig make a HttpClient instance with pass config.
 func NewHttpClientWithConfig(config *HttpClientConfig) *HttpClient {
 	if config == nil {
 		config = defaultHttpClientConfig
@@ -149,6 +160,11 @@ func NewHttpClientWithConfig(config *HttpClientConfig) *HttpClient {
 		client.TLS = config.TLSConfig
 	}
 
+	if config.Proxy != nil {
+		transport := client.Client.Transport.(*http.Transport)
+		transport.Proxy = http.ProxyURL(config.Proxy)
+	}
+
 	return client
 }
 
@@ -162,6 +178,11 @@ func (client *HttpClient) SendRequest(request *HttpRequest) (*http.Response, err
 	rawUrl := request.RawURL
 
 	req, err := http.NewRequest(request.Method, rawUrl, bytes.NewBuffer(request.Body))
+
+	if client.Context != nil {
+		req, err = http.NewRequestWithContext(client.Context, request.Method, rawUrl, bytes.NewBuffer(request.Body))
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -340,11 +361,20 @@ func validateRequest(req *HttpRequest) error {
 // only convert the field which is exported and has `json` tag.
 func StructToUrlValues(targetStruct any) (url.Values, error) {
 	result := url.Values{}
-	s, err := convertor.StructToMap(targetStruct)
+
+	var m map[string]interface{}
+
+	jsonBytes, err := json.Marshal(targetStruct)
 	if err != nil {
 		return nil, err
 	}
-	for k, v := range s {
+
+	err = json.Unmarshal(jsonBytes, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range m {
 		result.Add(k, fmt.Sprintf("%v", v))
 	}
 
