@@ -150,3 +150,27 @@ func BindNamed[Initial any, Alias any](initial string, alias string) func(di.Inj
 		di.MustAsNamed[Initial, Alias](injector, initial, alias)
 	}
 }
+
+func As[Initial any, Alias any]() error {
+	return di.As[Initial, Alias](DefaultInjector)
+}
+
+func MustAs[Initial any, Alias any]() {
+	di.MustAs[Initial, Alias](DefaultInjector)
+}
+
+func AsNamed[Initial any, Alias any](initial string, alias string) error {
+	return di.AsNamed[Initial, Alias](DefaultInjector, initial, alias)
+}
+
+func MustAsNamed[Initial any, Alias any](initial string, alias string) {
+	di.MustAsNamed[Initial, Alias](DefaultInjector, initial, alias)
+}
+
+func InvokeAs[T any]() (T, error) {
+	return di.InvokeAs[T](DefaultInjector)
+}
+
+func MustInvokeAs[T any]() T {
+	return di.MustInvokeAs[T](DefaultInjector)
+}
